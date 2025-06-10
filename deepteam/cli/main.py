@@ -134,12 +134,10 @@ def run(config: str):
 
     target = cfg.get("target", {})
 
-    simulator_model = load_model(target.get("simulator_model", "gpt-3.5-turbo-0125"))
-    evaluation_model = load_model(target.get("evaluation_model", "gpt-4o"))
-
     red_teamer = RedTeamer(
-        simulator_model=simulator_model,
-        evaluation_model=evaluation_model,
+        simulator_model=target.get("simulator_model", "gpt-3.5-turbo-0125"),
+        evaluation_model=target.get("evaluation_model", "gpt-4o"),
+
         target_purpose=target.get("purpose", ""),
         async_mode=cfg.get("options", {}).get("run_async", True),
         max_concurrent=cfg.get("options", {}).get("max_concurrent", 10),
@@ -238,7 +236,6 @@ def unset_local_model():
     config.remove_key("LOCAL_MODEL_BASE_URL")
     config.remove_key("LOCAL_MODEL_API_KEY")
     typer.echo("Local model unset.")
-
 
 @app.command("set-ollama")
 def set_ollama(
