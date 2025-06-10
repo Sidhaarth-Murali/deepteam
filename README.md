@@ -170,6 +170,19 @@ To configure a local model instead, run:
 deepteam set-local-model my-model --base-url http://localhost:8000
 ```
 
+You can also configure other providers:
+
+```bash
+# Azure OpenAI
+deepteam set-azure-openai --openai-api-key YOUR_KEY \
+  --openai-endpoint https://example.azure.com/ \
+  --openai-api-version 2024-05-01-preview \
+  --openai-model-name gpt-4o --deployment-name my-deploy
+
+# Gemini
+deepteam set-gemini --google-api-key YOUR_GOOGLE_KEY --model-name gemini-1.5-pro
+```
+
 **Congratulations! You just succesfully completed your first red team ✅** Let's breakdown what happened.
 
 - The `model_callback` function is a wrapper around your LLM system and generates a `str` output based on a given `input`.
