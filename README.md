@@ -128,6 +128,48 @@ Don't forget to run the file:
 python red_team_llm.py
 ```
 
+### YAML Configuration & CLI
+
+Red teaming configurations can also be defined in YAML and executed via the new
+`deepteam` CLI:
+
+```yaml
+# examples/sample_red_team.yaml
+name: Run DeepTeam Penetration Testing
+target:
+  purpose: "To test the model's ability to generate code"
+  simulator_model:
+    provider: openai
+    model: gpt-3.5-turbo
+  evaluation_model:
+    provider: openai
+    model: gpt-4o
+default_vulnerabilities:
+  - name: "Bias"
+    types: ["race"]
+attacks:
+  - name: "Prompt Injection"
+    weight: 2
+```
+
+Execute the run with:
+
+```bash
+deepteam run examples/sample_red_team.yaml
+```
+
+You can persist your OpenAI API key for repeated runs using the CLI:
+
+```bash
+deepteam login YOUR_OPENAI_API_KEY
+```
+
+To configure a local model instead, run:
+
+```bash
+deepteam set-local-model my-model --base-url http://localhost:8000
+```
+
 **Congratulations! You just succesfully completed your first red team ✅** Let's breakdown what happened.
 
 - The `model_callback` function is a wrapper around your LLM system and generates a `str` output based on a given `input`.
