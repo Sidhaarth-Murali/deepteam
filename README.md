@@ -138,8 +138,12 @@ Red teaming configurations can also be defined in YAML and executed via the new
 name: Run DeepTeam Penetration Testing
 target:
   purpose: "To test the model's ability to generate code"
-  simulator_model: "gpt-3.5-turbo"
-  evaluation_model: "gpt-4"
+  simulator_model:
+    provider: openai
+    model: gpt-3.5-turbo
+  evaluation_model:
+    provider: openai
+    model: gpt-4o
 default_vulnerabilities:
   - name: "Bias"
     types: ["race"]

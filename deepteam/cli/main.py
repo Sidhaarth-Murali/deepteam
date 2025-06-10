@@ -2,6 +2,7 @@ import yaml
 import typer
 
 from . import config
+from ..model_loader import load_model
 
 from deepteam.red_teamer import RedTeamer
 from deepteam.vulnerabilities import (
@@ -132,9 +133,11 @@ def run(config: str):
     config.apply_env()
 
     target = cfg.get("target", {})
+
     red_teamer = RedTeamer(
         simulator_model=target.get("simulator_model", "gpt-3.5-turbo-0125"),
         evaluation_model=target.get("evaluation_model", "gpt-4o"),
+
         target_purpose=target.get("purpose", ""),
         async_mode=cfg.get("options", {}).get("run_async", True),
         max_concurrent=cfg.get("options", {}).get("max_concurrent", 10),
@@ -174,6 +177,44 @@ def logout():
     typer.echo("Logged out.")
 
 
+@app.command("set-azure-openai")
+def set_azure_openai(
+    openai_api_key: str = typer.Option(..., "--openai-api-key"),
+    openai_endpoint: str = typer.Option(..., "--openai-endpoint"),
+    openai_api_version: str = typer.Option(..., "--openai-api-version"),
+    openai_model_name: str = typer.Option(..., "--openai-model-name"),
+    deployment_name: str = typer.Option(..., "--deployment-name"),
+    model_version: str = typer.Option(None, "--model-version"),
+):
+    """Configure Azure OpenAI credentials."""
+    config.set_key("AZURE_OPENAI_API_KEY", openai_api_key)
+    config.set_key("AZURE_OPENAI_ENDPOINT", openai_endpoint)
+    config.set_key("OPENAI_API_VERSION", openai_api_version)
+    config.set_key("AZURE_MODEL_NAME", openai_model_name)
+    config.set_key("AZURE_DEPLOYMENT_NAME", deployment_name)
+    if model_version:
+        config.set_key("AZURE_MODEL_VERSION", model_version)
+    config.set_key("USE_AZURE_OPENAI", "YES")
+    config.set_key("USE_LOCAL_MODEL", "NO")
+    typer.echo("Azure OpenAI configured.")
+
+
+@app.command("unset-azure-openai")
+def unset_azure_openai():
+    """Remove Azure OpenAI configuration."""
+    for key in [
+        "AZURE_OPENAI_API_KEY",
+        "AZURE_OPENAI_ENDPOINT",
+        "OPENAI_API_VERSION",
+        "AZURE_MODEL_NAME",
+        "AZURE_DEPLOYMENT_NAME",
+        "AZURE_MODEL_VERSION",
+        "USE_AZURE_OPENAI",
+    ]:
+        config.remove_key(key)
+    typer.echo("Azure OpenAI unset.")
+
+
 @app.command("set-local-model")
 def set_local_model(
     model_name: str = typer.Argument(...),
@@ -195,6 +236,72 @@ def unset_local_model():
     config.remove_key("LOCAL_MODEL_BASE_URL")
     config.remove_key("LOCAL_MODEL_API_KEY")
     typer.echo("Local model unset.")
+
+@app.command("set-ollama")
+def set_ollama(
+    model_name: str = typer.Argument(...),
+    base_url: str = typer.Option("http://localhost:11434", "--base-url"),
+):
+    """Use a local Ollama model."""
+    config.set_key("LOCAL_MODEL_NAME", model_name)
+    config.set_key("LOCAL_MODEL_BASE_URL", base_url)
+    config.set_key("LOCAL_MODEL_API_KEY", "ollama")
+    config.set_key("USE_LOCAL_MODEL", "YES")
+    config.set_key("USE_AZURE_OPENAI", "NO")
+    typer.echo("Ollama model configured.")
+
+
+@app.command("unset-ollama")
+def unset_ollama():
+    """Stop using local Ollama model."""
+    for key in [
+        "LOCAL_MODEL_NAME",
+        "LOCAL_MODEL_BASE_URL",
+        "LOCAL_MODEL_API_KEY",
+        "USE_LOCAL_MODEL",
+    ]:
+        config.remove_key(key)
+    typer.echo("Ollama model unset.")
+
+
+@app.command("set-gemini")
+def set_gemini(
+    model_name: str = typer.Option(None, "--model-name"),
+    google_api_key: str = typer.Option(None, "--google-api-key"),
+    project_id: str = typer.Option(None, "--project-id"),
+    location: str = typer.Option(None, "--location"),
+):
+    """Configure Gemini models via API key or Vertex AI."""
+    if not google_api_key and not (project_id and location):
+        typer.echo(
+            "Provide --google-api-key or both --project-id and --location.", err=True
+        )
+        raise typer.Exit(code=1)
+    config.set_key("USE_GEMINI_MODEL", "YES")
+    if model_name:
+        config.set_key("GEMINI_MODEL_NAME", model_name)
+    if google_api_key:
+        config.set_key("GOOGLE_API_KEY", google_api_key)
+    else:
+        config.set_key("GOOGLE_GENAI_USE_VERTEXAI", "YES")
+        config.set_key("GOOGLE_CLOUD_PROJECT", project_id)
+        config.set_key("GOOGLE_CLOUD_LOCATION", location)
+    typer.echo("Gemini configured.")
+
+
+@app.command("unset-gemini")
+def unset_gemini():
+    """Remove Gemini configuration."""
+    for key in [
+        "USE_GEMINI_MODEL",
+        "GEMINI_MODEL_NAME",
+        "GOOGLE_API_KEY",
+        "GOOGLE_GENAI_USE_VERTEXAI",
+        "GOOGLE_CLOUD_PROJECT",
+        "GOOGLE_CLOUD_LOCATION",
+    ]:
+        config.remove_key(key)
+    typer.echo("Gemini unset.")
 
 if __name__ == "__main__":
     app()
